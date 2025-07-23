@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import numpy as np
 import math
+import platform
 
 class Connect4Game:
     def __init__(self, root):
@@ -27,6 +28,9 @@ class Connect4Game:
             'hover': '#34495e',     # Hover effect
             'text': '#ecf0f1'       # Text color
         }
+        
+        # Detect OS for cross-platform compatibility
+        self.is_macos = platform.system() == 'Darwin'
         
         self.setup_ui()
         
@@ -84,6 +88,14 @@ class Connect4Game:
     def is_board_full(self):
         """Check if the board is full (draw condition)"""
         return all(self.board[self.ROW_COUNT-1][col] != 0 for col in range(self.COLUMN_COUNT))
+    
+    def update_button_color(self, button, color):
+        """Cross-platform button color update"""
+        button.configure(bg=color)
+        if self.is_macos:
+            # Force update on macOS
+            button.update_idletasks()
+            self.root.update_idletasks()
     
     def setup_ui(self):
         """Create the modern UI"""
@@ -188,9 +200,9 @@ class Connect4Game:
     def on_hover(self, button, entering):
         """Handle hover effects"""
         if entering and not self.game_over:
-            button.configure(bg=self.colors['hover'])
+            self.update_button_color(button, self.colors['hover'])
         else:
-            button.configure(bg=self.colors['empty'])
+            self.update_button_color(button, self.colors['empty'])
     
     def make_move(self, col):
         """Make a move (using original repository logic)"""
@@ -212,11 +224,14 @@ class Connect4Game:
         # Place the piece (using original repository function)
         self.drop_piece(self.board, row, col, piece)
         
-        # Update the UI - FIXED: Use correct row indexing
+        # Update the UI - FIXED: Use correct row indexing and cross-platform color update
         color = self.colors['red'] if piece == 1 else self.colors['yellow']
         # Note: We need to flip the row index because UI shows bottom row as 0
         ui_row = self.ROW_COUNT - 1 - row
-        self.buttons[ui_row][col].configure(bg=color)
+        self.update_button_color(self.buttons[ui_row][col], color)
+        
+        # Force update for cross-platform compatibility
+        self.root.update_idletasks()
         
         # Check for win (using original repository function)
         if self.winning_move(self.board, piece):
@@ -248,7 +263,10 @@ class Connect4Game:
         # Reset buttons
         for row in range(self.ROW_COUNT):
             for col in range(self.COLUMN_COUNT):
-                self.buttons[row][col].configure(bg=self.colors['empty'])
+                self.update_button_color(self.buttons[row][col], self.colors['empty'])
+        
+        # Force update for cross-platform compatibility
+        self.root.update_idletasks()
         
         # Reset game state
         self.game_over = False
